@@ -25,8 +25,12 @@ preferences {
     	input "turnon", "bool", title: "Turn on when door unlocks?"
         input "turnoff", "bool", title: "Turn off when door locks?"
     }
-    section("Delay turning off") {
-    	input "turnoffdelay", "number", title: "Minutes", required: false
+    section("Change mode?") {
+    	input "unlockmode", "mode", title: "Change to this mode when the door unlocks", required: false
+        input "lockmode", "mode", title: "Change to this mode when the door locks", required: false
+    }
+    section(title: "More Options", hidden: hideOptions(), hideable: true) {
+    	input "turnoffdelay", "number", title: "Delay turning off (Minutes)", required: false
     }
 }
 
@@ -45,6 +49,10 @@ def turniton(evt) {
     	if(evt.value == "unlocked") {
 			log.trace "Turning on switches: $switches"
         	switches.on()
+            
+            if(unlockmode) {
+            	changeMode(unlockmode)
+            }
 		}
     }
     if(turnoff) {
@@ -57,6 +65,10 @@ def turniton(evt) {
         	else {
         		turnitoff()
             }
+            
+            if(lockmode) {
+            	changeMode(lockmode)
+            }
         }
     }
 }
@@ -64,4 +76,20 @@ def turniton(evt) {
 def turnitoff() {
 	log.trace "Turning off switches: $switches"
 	switches.off()
+}
+
+def changeMode(newMode) {
+	if (newMode && location.mode != newMode) {
+		if (location.modes?.find{it.name == newMode}) {
+			setLocationMode(newMode)
+			log.trace "Mode changed to '${newMode}'"
+		}
+		else {
+			log.trace "Undefined mode '${newMode}'"
+		}
+	}
+}
+
+def hideOptions() {
+	false
 }
