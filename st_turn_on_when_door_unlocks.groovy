@@ -19,17 +19,17 @@ preferences {
 		input "lock1", "capability.lock", multiple: true
 	}
     section("Which switches?") {
-    	input "switches", "capability.switch", multiple: true
+    	input "switches", "capability.switch", multiple: true, required: false
     }
     section("Turn on or off?") {
-    	input "turnon", "bool", title: "Turn on when door unlocks?"
-        input "turnoff", "bool", title: "Turn off when door locks?"
+    	input "turnon", "bool", title: "Turn on when door unlocks?", required: false
+        input "turnoff", "bool", title: "Turn off when door locks?", required: false
     }
     section("Change mode?") {
     	input "unlockmode", "mode", title: "Change to this mode when the door unlocks", required: false
         input "lockmode", "mode", title: "Change to this mode when the door locks", required: false
     }
-    section(title: "More Options", hidden: hideOptions(), hideable: true) {
+    section(title: "More Options", hidden: hideOptions(), hideable: true) {https://graph.api.smartthings.com/ide/app/publish/f9be370b-9c89-49ee-b1ea-1ec54dd91bdf?scope=me
     	input "turnoffdelay", "number", title: "Delay turning off (Minutes)", required: false
     }
 }
@@ -45,18 +45,20 @@ def updated() {
 
 def turniton(evt) {
     //log.debug "$evt.value: $evt, $settings"
-    if(turnon) {
-    	if(evt.value == "unlocked") {
+    if(evt.value == "unlocked") {
+		if(turnon && switches) {
 			log.trace "Turning on switches: $switches"
         	switches.on()
-            
-            if(unlockmode) {
-            	changeMode(unlockmode)
-            }
 		}
+		
+        if(unlockmode) {
+           	changeMode(unlockmode)
+        }
+
     }
-    if(turnoff) {
-    	if(evt.value == "locked") {
+
+    if(evt.value == "locked") {
+		if(turnoff && switches) {
             if(turnoffdelay) {
             	log.trace "Waiting to turn off switches for $turnoffdelay minutes"
 	            def turnOffDelaySeconds = 60 * turnoffdelay
@@ -65,10 +67,10 @@ def turniton(evt) {
         	else {
         		turnitoff()
             }
-            
-            if(lockmode) {
-            	changeMode(lockmode)
-            }
+        }
+		
+        if(lockmode) {
+			changeMode(lockmode)
         }
     }
 }
