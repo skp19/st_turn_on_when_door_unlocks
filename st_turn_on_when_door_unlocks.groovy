@@ -29,18 +29,22 @@ preferences {
     	input "unlockmode", "mode", title: "Change to this mode when the door unlocks", required: false
         input "lockmode", "mode", title: "Change to this mode when the door locks", required: false
     }
+    section("Only between these times...") {
+    	input "startTime", "time", title: "Start Time", required: false
+        input "endTime", "time", title: "End Time", required: false
+    }
     section(title: "More Options", hidden: hideOptions(), hideable: true) {
     	input "turnoffdelay", "number", title: "Delay turning off (Minutes)", required: false
     }
 }
 
 def installed() {
-    subscribe(lock1, "lock", turniton)
+    subscribe(lock1, "lock", checkTime)
 }
 
 def updated() {
 	unsubscribe()
-    subscribe(lock1, "lock", turniton)
+    subscribe(lock1, "lock", checkTime)
 }
 
 def turniton(evt) {
@@ -90,6 +94,20 @@ def changeMode(newMode) {
 			log.trace "Undefined mode '${newMode}'"
 		}
 	}
+}
+
+def checkTime(evt) {
+    if(startTime && endTime) {
+        def currentTime = new Date()
+    	def startUTC = timeToday(startTime)
+    	def endUTC = timeToday(endTime)
+	    if((currentTime > startUTC && currentTime < endUTC && startUTC < endUTC) || (currentTime > startUTC && startUTC > endUTC) || (currentTime < startUTC && currentTime < endUTC)) {
+    		turniton(evt)
+    	}
+    }
+    else {
+    	turniton(evt)
+    }
 }
 
 def hideOptions() {
